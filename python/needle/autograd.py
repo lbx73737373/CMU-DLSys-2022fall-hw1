@@ -382,7 +382,7 @@ class Tensor(Value):
     __rmatmul__ = __matmul__
 
 
-def compute_gradient_of_variables(output_tensor, out_grad):
+def compute_gradient_of_variables(output_tensor: Tensor, out_grad):
     """Take gradient of output node with respect to each node in node_list.
 
     Store the computed result in the grad field of each Variable.
@@ -398,7 +398,13 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    for node in reverse_topo_order:
+        node.grad = sum_node_list(node_to_output_grads_list[node])
+
+        if not node.is_leaf():
+            partial_adjoints = node.op.gradient_as_tuple(node.grad, node)
+            for input_node, partial_adjoint in zip(node.inputs, partial_adjoints):
+                node_to_output_grads_list.setdefault(input_node, []).append(partial_adjoint)
     ### END YOUR SOLUTION
 
 
@@ -411,14 +417,27 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    topo_order = []
+    for node in node_list:
+        topo_sort_dfs(node, topo_order)
+
+    return topo_order
     ### END YOUR SOLUTION
 
 
-def topo_sort_dfs(node, visited, topo_order):
+def topo_sort_dfs(node, topo_order):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if node in topo_order:
+        return
+    elif node.inputs is None:
+        topo_order.append(node)
+        return
+    else:
+        for child in node.inputs:
+            topo_sort_dfs(child, topo_order)
+        topo_order.append(node)
+        return
     ### END YOUR SOLUTION
 
 
